@@ -104,7 +104,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
         )}
 
         {/* Session list */}
-        <div className="flex-1 overflow-y-auto -mx-2">
+        <div className="flex-1 overflow-y-auto -mx-2 hide-scrollbar">
           {filtered.length > 0 ? (
             filtered.map((session) => (
               <SessionCard

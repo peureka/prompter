@@ -35,7 +35,7 @@ export function Controls({
 }: ControlsProps) {
   return (
     <div
-      className="fixed bottom-[2px] left-0 w-full z-30 transition-opacity duration-300 px-4 pb-4"
+      className="fixed bottom-[2px] left-0 w-full z-30 transition-opacity duration-300 px-4 safe-bottom"
       style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? "auto" : "none" }}
     >
       <div className="max-w-[800px] mx-auto flex items-center gap-4 rounded-lg px-4 py-3"

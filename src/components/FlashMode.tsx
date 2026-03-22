@@ -124,7 +124,7 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
 
       <div
         ref={containerRef}
-        className="w-full h-full flex flex-col items-center justify-center relative"
+        className={`w-full h-full flex flex-col items-center justify-center relative ${isPlaying ? "playing-mode" : ""}`}
         style={{ cursor: "pointer" }}
       >
         {/* Focal point indicator */}

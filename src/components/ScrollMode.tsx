@@ -103,7 +103,7 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
 
       <div
         ref={containerRef}
-        className="w-full h-full overflow-hidden relative px-6"
+        className={`w-full h-full overflow-hidden relative px-6 ${isPlaying ? "playing-mode" : ""}`}
         style={{ cursor: "pointer" }}
       >
         <div

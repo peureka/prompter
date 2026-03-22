@@ -42,15 +42,48 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full py-10 gap-6">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          paddingTop: 48,
+          paddingBottom: 32,
+          gap: 28,
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-text text-3xl font-bold tracking-tight">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <h1
+            style={{
+              color: "#FFD700",
+              fontSize: "1.875rem",
+              fontWeight: 700,
+              letterSpacing: "-0.02em",
+            }}
+          >
             Prompter
           </h1>
           <button
             onClick={onNewSession}
-            className="shrink-0 px-6 py-3 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
+            style={{
+              flexShrink: 0,
+              padding: "12px 28px",
+              borderRadius: 10,
+              background: "#FFD700",
+              color: "#000",
+              fontWeight: 700,
+              fontSize: "0.875rem",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
           >
             + New
           </button>
@@ -67,7 +100,6 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               className="bg-transparent border border-white/15 rounded-lg px-4 py-3 text-text text-sm placeholder:text-white/20 outline-none focus:border-text/50 transition-colors"
             />
 
-            {/* Tag filters */}
             {allTags.length > 0 && (
               <div className="flex gap-2 flex-wrap">
                 <button
@@ -106,7 +138,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
         )}
 
         {/* Session list */}
-        <div className="flex-1 overflow-y-auto -mx-2 hide-scrollbar">
+        <div className="flex-1 overflow-y-auto hide-scrollbar">
           {filtered.length > 0 ? (
             filtered.map((session) => (
               <SessionCard

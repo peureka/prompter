@@ -54,17 +54,49 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full py-10 gap-6">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          paddingTop: 48,
+          paddingBottom: 32,
+          gap: 20,
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 8,
+          }}
+        >
           <button
             onClick={onBack}
-            className="text-white/40 hover:text-white transition-colors text-sm py-1 px-2 -ml-2"
+            style={{
+              background: "none",
+              border: "none",
+              color: "rgba(255,255,255,0.4)",
+              cursor: "pointer",
+              fontSize: "0.875rem",
+              fontFamily: "inherit",
+              padding: "4px 8px",
+            }}
           >
             &larr; Back
           </button>
-          <h1 className="text-text text-xl font-bold">New Session</h1>
-          <div className="w-14" />
+          <h1
+            style={{
+              color: "#FFD700",
+              fontSize: "1.25rem",
+              fontWeight: 700,
+            }}
+          >
+            New Session
+          </h1>
+          <div style={{ width: 56 }} />
         </div>
 
         {/* Title */}
@@ -73,28 +105,43 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title (optional)"
-          className="bg-transparent border border-white/15 rounded-lg px-4 py-3 text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-sm"
+          className="bg-transparent border border-white/15 rounded-lg text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-sm"
+          style={{ padding: "14px 16px" }}
         />
 
         {/* Mode toggle */}
-        <div className="flex gap-2">
+        <div style={{ display: "flex", gap: 8 }}>
           <button
             onClick={() => setMode("scroll")}
-            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
-              mode === "scroll"
-                ? "bg-text text-bg"
-                : "bg-white/8 text-white/40 hover:text-white"
-            }`}
+            style={{
+              flex: 1,
+              padding: "14px 0",
+              borderRadius: 10,
+              fontSize: "0.875rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              background: mode === "scroll" ? "#FFD700" : "rgba(255,255,255,0.08)",
+              color: mode === "scroll" ? "#000" : "rgba(255,255,255,0.4)",
+            }}
           >
             Scroll
           </button>
           <button
             onClick={() => setMode("flash")}
-            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
-              mode === "flash"
-                ? "bg-text text-bg"
-                : "bg-white/8 text-white/40 hover:text-white"
-            }`}
+            style={{
+              flex: 1,
+              padding: "14px 0",
+              borderRadius: 10,
+              fontSize: "0.875rem",
+              fontWeight: 700,
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              background: mode === "flash" ? "#FFD700" : "rgba(255,255,255,0.08)",
+              color: mode === "flash" ? "#000" : "rgba(255,255,255,0.4)",
+            }}
           >
             Flash
           </button>
@@ -105,25 +152,55 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
           value={text}
           onChange={handleTextChange}
           placeholder="Paste your text here..."
-          className="flex-1 bg-transparent border border-white/15 rounded-lg p-4 text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors resize-none text-sm leading-relaxed"
+          className="bg-transparent border border-white/15 rounded-lg text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-sm leading-relaxed"
+          style={{
+            flex: 1,
+            padding: 16,
+            resize: "none",
+            fontFamily: "inherit",
+          }}
         />
 
         {/* Stats + Actions */}
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-white/30">
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.3)" }}>
             {words} words &middot; ~{formatDuration(duration)} at{" "}
             {SCROLL_WPM_DEFAULT} WPM
           </span>
-          <div className="flex gap-2">
+          <div style={{ display: "flex", gap: 8 }}>
             <button
               onClick={handlePasteAndClean}
-              className="px-4 py-2 rounded-lg bg-white/8 text-white/50 hover:text-white transition-colors text-xs"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.5)",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "0.75rem",
+                fontFamily: "inherit",
+              }}
             >
               Paste & Clean
             </button>
             <button
               onClick={handleClean}
-              className="px-4 py-2 rounded-lg bg-white/8 text-white/50 hover:text-white transition-colors text-xs"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                background: "rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.5)",
+                border: "none",
+                cursor: "pointer",
+                fontSize: "0.75rem",
+                fontFamily: "inherit",
+              }}
             >
               Clean
             </button>
@@ -134,7 +211,17 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
         <button
           onClick={handleStart}
           disabled={!text.trim()}
-          className="py-4 rounded-lg bg-text text-bg font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            padding: "18px 0",
+            borderRadius: 10,
+            background: text.trim() ? "#FFD700" : "rgba(255,215,0,0.3)",
+            color: "#000",
+            fontWeight: 700,
+            fontSize: "1.125rem",
+            border: "none",
+            cursor: text.trim() ? "pointer" : "not-allowed",
+            fontFamily: "inherit",
+          }}
         >
           Start
         </button>

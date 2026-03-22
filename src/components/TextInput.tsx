@@ -9,7 +9,7 @@ import { SCROLL_WPM_DEFAULT } from "../lib/constants";
 import { Layout } from "./Layout";
 
 interface TextInputProps {
-  onStart: (text: string, title: string, mode: "scroll" | "flash") => void;
+  onStart: (text: string, title: string, mode: "scroll" | "flash", tags: string[]) => void;
   onBack: () => void;
 }
 
@@ -17,6 +17,7 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
   const [title, setTitle] = useState("");
   const [text, setText] = useState("");
   const [mode, setMode] = useState<"scroll" | "flash">("scroll");
+  const [tagsInput, setTagsInput] = useState("");
 
   const words = wordCount(text);
   const duration = estimatedDurationSeconds(text, SCROLL_WPM_DEFAULT);
@@ -49,7 +50,11 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
     if (!text.trim()) return;
     const finalTitle =
       title.trim() || text.trim().split(/\s+/).slice(0, 5).join(" ");
-    onStart(text.trim(), finalTitle, mode);
+    const tags = tagsInput
+      .split(",")
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean);
+    onStart(text.trim(), finalTitle, mode, tags);
   }, [text, title, mode, onStart]);
 
   return (
@@ -107,6 +112,16 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
           placeholder="Title (optional)"
           className="bg-transparent border border-white/15 rounded-lg text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-sm"
           style={{ padding: "14px 16px" }}
+        />
+
+        {/* Tags */}
+        <input
+          type="text"
+          value={tagsInput}
+          onChange={(e) => setTagsInput(e.target.value)}
+          placeholder="Tags (comma-separated, e.g. menmoirs, youtube)"
+          className="bg-transparent border border-white/15 rounded-lg text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-xs"
+          style={{ padding: "12px 16px" }}
         />
 
         {/* Mode toggle */}

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useScrollEngine } from "../lib/hooks/use-scroll-engine";
 import { useAutoHide } from "../lib/hooks/use-auto-hide";
 import { useKeyboard } from "../lib/hooks/use-keyboard";
@@ -22,11 +22,14 @@ interface ScrollModeProps {
   text: string;
   onExit: () => void;
   onComplete?: (wpm: number, comfort: "slow" | "good" | "fast") => void;
+  initialWpm?: number;
+  initialFontSize?: number;
+  onSettingsChange?: (wpm: number, fontSizeIndex: number) => void;
 }
 
-export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
-  const [wpm, setWpm] = useState(SCROLL_WPM_DEFAULT);
-  const [fontSizeIndex, setFontSizeIndex] = useState(FONT_SIZE_DEFAULT);
+export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSize, onSettingsChange }: ScrollModeProps) {
+  const [wpm, setWpm] = useState(initialWpm ?? SCROLL_WPM_DEFAULT);
+  const [fontSizeIndex, setFontSizeIndex] = useState(initialFontSize ?? FONT_SIZE_DEFAULT);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -34,7 +37,13 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
   const [isMirrored, setIsMirrored] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const pauseRefs = useRef<(HTMLElement | null)[]>([]);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  // Persist settings changes
+  useEffect(() => {
+    onSettingsChange?.(wpm, fontSizeIndex);
+  }, [wpm, fontSizeIndex, onSettingsChange]);
 
   const fontSize = FONT_SIZES[fontSizeIndex].size;
 
@@ -47,11 +56,12 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
     [text]
   );
 
-  const { progress, isComplete, reset } = useScrollEngine({
+  const { progress, isComplete, reset, skip } = useScrollEngine({
     text,
     wpm,
     isPlaying,
     containerRef: scrollRef,
+    pauseElements: pauseRefs,
   });
 
   const { controlsVisible } = useAutoHide(isPlaying);
@@ -80,8 +90,8 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
     onTogglePlay: handleTogglePlay,
     onSpeedUp: () => setWpm((w) => Math.min(w + 10, SCROLL_WPM_MAX)),
     onSpeedDown: () => setWpm((w) => Math.max(w - 10, SCROLL_WPM_MIN)),
-    onSkipForward: () => {},
-    onSkipBack: () => {},
+    onSkipForward: () => skip(5),
+    onSkipBack: () => skip(-5),
     onExit,
     onToggleMirror: () => setIsMirrored((m) => !m),
     onToggleFullscreen: toggleFullscreen,
@@ -90,8 +100,8 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
 
   useGestures(containerRef, {
     onTap: handleTogglePlay,
-    onSwipeLeft: () => {},
-    onSwipeRight: () => {},
+    onSwipeLeft: () => skip(5),
+    onSwipeRight: () => skip(-5),
   });
 
   return (
@@ -104,19 +114,28 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
         className={`w-full h-full relative ${isPlaying ? "playing-mode" : ""}`}
         style={{ cursor: "pointer" }}
       >
-        {/* Gradient masks for top and bottom fade */}
+        {/* Gradient masks — fade top/bottom, highlight center reading line */}
         <div
           className="absolute top-0 left-0 w-full z-10 pointer-events-none"
           style={{
-            height: "20%",
+            height: "35%",
             background: "linear-gradient(to bottom, #000 0%, transparent 100%)",
           }}
         />
         <div
           className="absolute bottom-0 left-0 w-full z-10 pointer-events-none"
           style={{
-            height: "30%",
+            height: "40%",
             background: "linear-gradient(to top, #000 0%, transparent 100%)",
+          }}
+        />
+        {/* Focal line indicator */}
+        <div
+          className="absolute left-0 w-full z-10 pointer-events-none"
+          style={{
+            top: "38%",
+            height: 2,
+            background: "linear-gradient(to right, transparent 0%, rgba(255,215,0,0.15) 20%, rgba(255,215,0,0.15) 80%, transparent 100%)",
           }}
         />
 
@@ -140,7 +159,13 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
             {paragraphs.map((para, i) => {
               const isPause = para.trim() === PAUSE_MARKER;
               if (isPause) {
-                return <div key={i} className="h-8" />;
+                return (
+                  <div
+                    key={i}
+                    className="h-8"
+                    ref={(el) => { pauseRefs.current[i] = el; }}
+                  />
+                );
               }
               return (
                 <p

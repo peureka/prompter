@@ -124,5 +124,19 @@ export function useFlashEngine({
     });
   }, [words]);
 
-  return { ...state, reset };
+  const skipWords = useCallback(
+    (count: number) => {
+      const newIndex = Math.max(0, Math.min(wordIndexRef.current + count, words.length - 1));
+      wordIndexRef.current = newIndex;
+      setState((s) => ({
+        ...s,
+        currentWord: words[newIndex],
+        wordIndex: newIndex,
+        progress: words.length > 1 ? newIndex / (words.length - 1) : 0,
+      }));
+    },
+    [words]
+  );
+
+  return { ...state, reset, skipWords };
 }

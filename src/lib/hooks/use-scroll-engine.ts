@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { wordCount } from "../wpm";
+import { PAUSE_DURATION_MS } from "../constants";
 
 interface ScrollState {
   scrollTop: number;
@@ -12,6 +13,7 @@ interface UseScrollEngineOptions {
   wpm: number;
   isPlaying: boolean;
   containerRef: React.RefObject<HTMLElement | null>;
+  pauseElements?: React.RefObject<(HTMLElement | null)[]>;
 }
 
 export function useScrollEngine({
@@ -19,6 +21,7 @@ export function useScrollEngine({
   wpm,
   isPlaying,
   containerRef,
+  pauseElements,
 }: UseScrollEngineOptions) {
   const [state, setState] = useState<ScrollState>({
     scrollTop: 0,
@@ -29,10 +32,9 @@ export function useScrollEngine({
   const scrollTopRef = useRef(0);
   const lastTimestampRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
+  const pauseUntilRef = useRef<number | null>(null);
+  const pausedIndicesRef = useRef<Set<number>>(new Set());
 
-  // Calculate scroll speed: pixels per millisecond
-  // Total words / WPM = minutes to read. Convert to ms.
-  // scrollHeight / totalMs = pixels per ms
   const getPixelsPerMs = useCallback(() => {
     const el = containerRef.current;
     if (!el) return 0;
@@ -51,6 +53,16 @@ export function useScrollEngine({
         return;
       }
 
+      // Handle active pause
+      if (pauseUntilRef.current !== null) {
+        if (timestamp < pauseUntilRef.current) {
+          lastTimestampRef.current = timestamp;
+          rafRef.current = requestAnimationFrame(tick);
+          return;
+        }
+        pauseUntilRef.current = null;
+      }
+
       const deltaMs = timestamp - lastTimestampRef.current;
       lastTimestampRef.current = timestamp;
 
@@ -67,16 +79,25 @@ export function useScrollEngine({
       if (newScrollTop >= scrollableHeight) {
         scrollTopRef.current = scrollableHeight;
         el.scrollTop = scrollableHeight;
-        setState({
-          scrollTop: scrollableHeight,
-          progress: 1,
-          isComplete: true,
-        });
+        setState({ scrollTop: scrollableHeight, progress: 1, isComplete: true });
         return;
       }
 
       scrollTopRef.current = newScrollTop;
       el.scrollTop = newScrollTop;
+
+      // Check if any pause element is at the focal point (~40% of viewport)
+      if (pauseElements?.current) {
+        const focalY = el.getBoundingClientRect().top + el.clientHeight * 0.4;
+        pauseElements.current.forEach((pauseEl, i) => {
+          if (!pauseEl || pausedIndicesRef.current.has(i)) return;
+          const rect = pauseEl.getBoundingClientRect();
+          if (rect.top <= focalY && rect.bottom >= focalY - 20) {
+            pausedIndicesRef.current.add(i);
+            pauseUntilRef.current = timestamp + PAUSE_DURATION_MS;
+          }
+        });
+      }
 
       setState({
         scrollTop: newScrollTop,
@@ -86,7 +107,7 @@ export function useScrollEngine({
 
       rafRef.current = requestAnimationFrame(tick);
     },
-    [containerRef, getPixelsPerMs]
+    [containerRef, getPixelsPerMs, pauseElements]
   );
 
   useEffect(() => {
@@ -99,17 +120,35 @@ export function useScrollEngine({
     return () => cancelAnimationFrame(rafRef.current);
   }, [isPlaying, tick, state.isComplete]);
 
+  // Skip forward/back by adjusting scrollTop
+  const skip = useCallback(
+    (deltaSeconds: number) => {
+      const el = containerRef.current;
+      if (!el) return;
+      const pixelsPerMs = getPixelsPerMs();
+      const deltaPixels = pixelsPerMs * deltaSeconds * 1000;
+      const scrollableHeight = el.scrollHeight - el.clientHeight;
+      const newTop = Math.max(0, Math.min(scrollTopRef.current + deltaPixels, scrollableHeight));
+      scrollTopRef.current = newTop;
+      el.scrollTop = newTop;
+      setState((s) => ({
+        ...s,
+        scrollTop: newTop,
+        progress: scrollableHeight > 0 ? newTop / scrollableHeight : 0,
+      }));
+    },
+    [containerRef, getPixelsPerMs]
+  );
+
   const reset = useCallback(() => {
     scrollTopRef.current = 0;
     lastTimestampRef.current = null;
+    pauseUntilRef.current = null;
+    pausedIndicesRef.current = new Set();
     const el = containerRef.current;
     if (el) el.scrollTop = 0;
-    setState({
-      scrollTop: 0,
-      progress: 0,
-      isComplete: false,
-    });
+    setState({ scrollTop: 0, progress: 0, isComplete: false });
   }, [containerRef]);
 
-  return { ...state, reset };
+  return { ...state, reset, skip };
 }

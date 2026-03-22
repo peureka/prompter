@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFlashEngine } from "../lib/hooks/use-flash-engine";
 import { useAutoHide } from "../lib/hooks/use-auto-hide";
 import { useKeyboard } from "../lib/hooks/use-keyboard";
@@ -14,16 +14,22 @@ import {
   FLASH_WPM_DEFAULT,
   FLASH_WPM_MIN,
   FLASH_WPM_MAX,
+  FONT_SIZES,
+  FONT_SIZE_DEFAULT,
 } from "../lib/constants";
 
 interface FlashModeProps {
   text: string;
   onExit: () => void;
   onRate?: (rating: "slow" | "good" | "fast", wpm: number) => void;
+  initialWpm?: number;
+  initialFontSize?: number;
+  onSettingsChange?: (wpm: number, fontSizeIndex: number) => void;
 }
 
-export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
-  const [wpm, setWpm] = useState(FLASH_WPM_DEFAULT);
+export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, onSettingsChange }: FlashModeProps) {
+  const [wpm, setWpm] = useState(initialWpm ?? FLASH_WPM_DEFAULT);
+  const [fontSizeIndex, setFontSizeIndex] = useState(initialFontSize ?? FONT_SIZE_DEFAULT);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -32,6 +38,11 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
   const [isMirrored, setIsMirrored] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
+
+  // Persist settings changes
+  useEffect(() => {
+    onSettingsChange?.(wpm, fontSizeIndex);
+  }, [wpm, fontSizeIndex, onSettingsChange]);
 
   const words = useMemo(
     () => text.split(/\s+/).filter(Boolean),
@@ -47,6 +58,7 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
     actualWpm,
     totalWords,
     reset,
+    skipWords,
   } = useFlashEngine({ words, wpm, isPlaying });
 
   const { controlsVisible } = useAutoHide(isPlaying);
@@ -81,17 +93,17 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
   const handleRate = useCallback(
     (rating: "slow" | "good" | "fast") => {
       onRate?.(rating, actualWpm);
-      onExit();
+      // Stay on stats screen — user chooses Again or Back
     },
-    [onRate, actualWpm, onExit]
+    [onRate, actualWpm]
   );
 
   useKeyboard({
     onTogglePlay: handleTogglePlay,
     onSpeedUp: () => setWpm((w) => Math.min(w + 10, FLASH_WPM_MAX)),
     onSpeedDown: () => setWpm((w) => Math.max(w - 10, FLASH_WPM_MIN)),
-    onSkipForward: () => {},
-    onSkipBack: () => {},
+    onSkipForward: () => skipWords(10),
+    onSkipBack: () => skipWords(-10),
     onExit,
     onToggleMirror: () => setIsMirrored((m) => !m),
     onToggleFullscreen: toggleFullscreen,
@@ -100,8 +112,8 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
 
   useGestures(containerRef, {
     onTap: handleTogglePlay,
-    onSwipeLeft: () => {},
-    onSwipeRight: () => {},
+    onSwipeLeft: () => skipWords(10),
+    onSwipeRight: () => skipWords(-10),
   });
 
   if (showStats) {
@@ -134,7 +146,7 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
         <p
           className="text-text font-bold transition-opacity duration-75 px-4 text-center"
           style={{
-            fontSize: `clamp(2rem, 10vw, 6rem)`,
+            fontSize: `${FONT_SIZES[fontSizeIndex].size * 1.5}rem`,
             opacity: hasStarted ? 1 : 0.3,
             transform: isMirrored ? "scaleX(-1)" : undefined,
           }}
@@ -155,8 +167,8 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
         onWpmChange={setWpm}
         wpmMin={FLASH_WPM_MIN}
         wpmMax={FLASH_WPM_MAX}
-        fontSizeIndex={0}
-        onFontSizeChange={() => {}}
+        fontSizeIndex={fontSizeIndex}
+        onFontSizeChange={setFontSizeIndex}
         onReset={handleReset}
         visible={controlsVisible}
         isMirrored={isMirrored}

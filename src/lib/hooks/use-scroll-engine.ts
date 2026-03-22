@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PAUSE_MARKER, PAUSE_DURATION_MS } from "../constants";
 import { wordCount } from "../wpm";
 
 interface ScrollState {

@@ -75,11 +75,17 @@ export function SessionDetail({ sessionId, onBack, onStart }: SessionDetailProps
             {avgWpm && <span>{avgWpm} avg WPM</span>}
           </div>
           {session.tags.length > 0 && (
-            <div className="flex gap-1 mt-2">
+            <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
               {session.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[10px] px-2 py-0.5 rounded-full bg-text/10 text-text/50"
+                  style={{
+                    fontSize: "0.6875rem",
+                    padding: "5px 12px",
+                    borderRadius: 999,
+                    background: "rgba(255,215,0,0.1)",
+                    color: "rgba(255,215,0,0.5)",
+                  }}
                 >
                   {tag}
                 </span>

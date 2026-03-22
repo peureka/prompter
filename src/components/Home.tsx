@@ -101,14 +101,20 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
             />
 
             {allTags.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <button
                   onClick={() => setTagFilter(null)}
-                  className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
-                    tagFilter === null
-                      ? "bg-text text-bg"
-                      : "bg-white/8 text-white/40 hover:text-white"
-                  }`}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: 999,
+                    fontSize: "0.75rem",
+                    fontFamily: "inherit",
+                    border: "none",
+                    cursor: "pointer",
+                    background: tagFilter === null ? "#FFD700" : "rgba(255,255,255,0.08)",
+                    color: tagFilter === null ? "#000" : "rgba(255,255,255,0.4)",
+                    fontWeight: tagFilter === null ? 700 : 400,
+                  }}
                 >
                   All
                 </button>
@@ -118,11 +124,17 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
                     onClick={() =>
                       setTagFilter(tagFilter === tag ? null : tag)
                     }
-                    className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
-                      tagFilter === tag
-                        ? "bg-text text-bg"
-                        : "bg-white/8 text-white/40 hover:text-white"
-                    }`}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 999,
+                      fontSize: "0.75rem",
+                      fontFamily: "inherit",
+                      border: "none",
+                      cursor: "pointer",
+                      background: tagFilter === tag ? "#FFD700" : "rgba(255,255,255,0.08)",
+                      color: tagFilter === tag ? "#000" : "rgba(255,255,255,0.4)",
+                      fontWeight: tagFilter === tag ? 700 : 400,
+                    }}
                   >
                     {tag}
                   </button>

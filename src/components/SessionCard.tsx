@@ -107,11 +107,17 @@ export function SessionCard({ session, onSelect, onDelete }: SessionCardProps) {
             <span>{timeAgo(session.last_practised_at)}</span>
           </div>
           {session.tags.length > 0 && (
-            <div className="flex gap-1 mt-1.5">
+            <div style={{ display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
               {session.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="text-[9px] px-1.5 py-0.5 rounded-full bg-text/10 text-text/50"
+                  style={{
+                    fontSize: "0.625rem",
+                    padding: "4px 10px",
+                    borderRadius: 999,
+                    background: "rgba(255,215,0,0.1)",
+                    color: "rgba(255,215,0,0.5)",
+                  }}
                 >
                   {tag}
                 </span>

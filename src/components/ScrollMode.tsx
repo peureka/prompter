@@ -3,6 +3,7 @@ import { useScrollEngine } from "../lib/hooks/use-scroll-engine";
 import { useAutoHide } from "../lib/hooks/use-auto-hide";
 import { useKeyboard } from "../lib/hooks/use-keyboard";
 import { useGestures } from "../lib/hooks/use-gestures";
+import { useFullscreen } from "../lib/hooks/use-fullscreen";
 import { Layout } from "./Layout";
 import { Countdown } from "./Countdown";
 import { Controls } from "./Controls";
@@ -29,7 +30,9 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
+  const [isMirrored, setIsMirrored] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const fontSize = FONT_SIZES[fontSizeIndex].size;
   const lineHeightPx = fontSize * 16 * 1.8;
@@ -78,6 +81,8 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
     onSkipForward: () => {},
     onSkipBack: () => {},
     onExit,
+    onToggleMirror: () => setIsMirrored((m) => !m),
+    onToggleFullscreen: toggleFullscreen,
     onToggleHelp: () => setShowHelp((h) => !h),
   });
 
@@ -103,7 +108,7 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
         <div
           className="absolute w-full left-0 px-6 transition-transform"
           style={{
-            transform: `translateY(${-scrollY + lineHeightPx * 4}px)`,
+            transform: `translateY(${-scrollY + lineHeightPx * 4}px)${isMirrored ? " scaleX(-1)" : ""}`,
           }}
         >
           {lines.map((line, i) => {
@@ -158,6 +163,10 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
         onFontSizeChange={setFontSizeIndex}
         onReset={handleReset}
         visible={controlsVisible}
+        isMirrored={isMirrored}
+        onToggleMirror={() => setIsMirrored((m) => !m)}
+        isFullscreen={isFullscreen}
+        onToggleFullscreen={toggleFullscreen}
       />
 
       <ProgressBar progress={progress} />

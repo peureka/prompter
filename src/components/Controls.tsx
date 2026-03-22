@@ -11,6 +11,10 @@ interface ControlsProps {
   onFontSizeChange: (index: number) => void;
   onReset: () => void;
   visible: boolean;
+  isMirrored?: boolean;
+  onToggleMirror?: () => void;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 export function Controls({
@@ -24,6 +28,10 @@ export function Controls({
   onFontSizeChange,
   onReset,
   visible,
+  isMirrored,
+  onToggleMirror,
+  isFullscreen,
+  onToggleFullscreen,
 }: ControlsProps) {
   return (
     <div
@@ -82,6 +90,54 @@ export function Controls({
             </button>
           ))}
         </div>
+
+        {/* Mirror */}
+        {onToggleMirror && (
+          <button
+            onClick={onToggleMirror}
+            className={`transition-colors shrink-0 ${
+              isMirrored ? "text-text" : "text-white/50 hover:text-white"
+            }`}
+            aria-label="Toggle mirror"
+            title="Mirror (M)"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              style={{ transform: isMirrored ? "scaleX(-1)" : undefined }}
+            >
+              <path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3" />
+              <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" />
+              <line x1="12" y1="3" x2="12" y2="21" strokeDasharray="2 2" />
+            </svg>
+          </button>
+        )}
+
+        {/* Fullscreen */}
+        {onToggleFullscreen && (
+          <button
+            onClick={onToggleFullscreen}
+            className={`transition-colors shrink-0 ${
+              isFullscreen ? "text-text" : "text-white/50 hover:text-white"
+            }`}
+            aria-label="Toggle fullscreen"
+            title="Fullscreen (F)"
+          >
+            {isFullscreen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+                <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+                <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+              </svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+              </svg>
+            )}
+          </button>
+        )}
 
         {/* Reset */}
         <button

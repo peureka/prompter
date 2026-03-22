@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import { Home } from "./components/Home";
 import { TextInput } from "./components/TextInput";
 import { ScrollMode } from "./components/ScrollMode";
+import { FlashMode } from "./components/FlashMode";
 
 interface SessionData {
   text: string;
@@ -36,6 +37,9 @@ function App() {
       )}
       {view === "scroll" && session && (
         <ScrollMode text={session.text} onExit={() => setView("home")} />
+      )}
+      {view === "flash" && session && (
+        <FlashMode text={session.text} onExit={() => setView("home")} />
       )}
     </>
   );

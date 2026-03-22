@@ -41,10 +41,7 @@ body {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
-/* Touch target minimum size — only for primary action buttons */
-.btn-primary {
-  min-height: 44px;
-}
+/* No global button constraints — size via padding */
 
 /* Slider styling */
 input[type="range"] {

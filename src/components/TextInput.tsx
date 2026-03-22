@@ -134,7 +134,7 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
         <button
           onClick={handleStart}
           disabled={!text.trim()}
-          className="btn-primary py-4 rounded-lg bg-text text-bg font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+          className="py-4 rounded-lg bg-text text-bg font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Start
         </button>

@@ -50,7 +50,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
           </h1>
           <button
             onClick={onNewSession}
-            className="btn-primary px-6 py-2.5 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
+            className="px-6 py-3 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
           >
             + New
           </button>

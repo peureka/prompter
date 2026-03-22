@@ -213,13 +213,13 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
           <div className="flex gap-4 mt-2">
             <button
               onClick={handleReset}
-              className="btn-primary px-8 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
+              className="px-8 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
             >
               Again
             </button>
             <button
               onClick={onExit}
-              className="btn-primary px-8 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
+              className="px-8 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
             >
               Back
             </button>

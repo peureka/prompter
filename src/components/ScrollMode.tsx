@@ -21,9 +21,10 @@ import {
 interface ScrollModeProps {
   text: string;
   onExit: () => void;
+  onComplete?: (wpm: number, comfort: "slow" | "good" | "fast") => void;
 }
 
-export function ScrollMode({ text, onExit }: ScrollModeProps) {
+export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
   const [wpm, setWpm] = useState(SCROLL_WPM_DEFAULT);
   const [fontSizeIndex, setFontSizeIndex] = useState(FONT_SIZE_DEFAULT);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -172,8 +173,29 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
       <ProgressBar progress={progress} />
 
       {isComplete && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/90 gap-6">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/90 gap-8">
           <p className="text-text text-2xl font-bold">Done</p>
+          <p className="text-white/40 text-sm">at {wpm} WPM</p>
+
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-white/60 text-sm">How did that feel?</p>
+            <div className="flex gap-3">
+              {(["slow", "good", "fast"] as const).map((rating) => (
+                <button
+                  key={rating}
+                  onClick={() => onComplete?.(wpm, rating)}
+                  className={`px-5 py-2 rounded-lg text-sm transition-colors ${
+                    rating === "good"
+                      ? "bg-text text-bg font-bold hover:opacity-90"
+                      : "border border-white/15 text-white/60 hover:text-text hover:border-text/30"
+                  }`}
+                >
+                  {rating === "slow" ? "Too slow" : rating === "fast" ? "Too fast" : "Good"}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-4">
             <button
               onClick={handleReset}

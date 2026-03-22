@@ -66,6 +66,24 @@ function App() {
     [activeSessionId]
   );
 
+  const handleScrollComplete = useCallback(
+    async (wpm: number, comfort: "slow" | "good" | "fast") => {
+      if (activeSessionId === null) return;
+      const session = await db.sessions.get(activeSessionId);
+      if (!session) return;
+      const entry: WpmEntry = {
+        date: new Date().toISOString(),
+        wpm,
+        mode: "scroll",
+        comfort,
+      };
+      await db.sessions.update(activeSessionId, {
+        wpm_history: [...session.wpm_history, entry],
+      });
+    },
+    [activeSessionId]
+  );
+
   const handleExit = useCallback(() => {
     setView("home");
     setActiveSessionId(null);
@@ -83,7 +101,7 @@ function App() {
         <TextInput onStart={handleStart} onBack={() => setView("home")} />
       )}
       {view === "scroll" && activeText && (
-        <ScrollMode text={activeText} onExit={handleExit} />
+        <ScrollMode text={activeText} onExit={handleExit} onComplete={handleScrollComplete} />
       )}
       {view === "flash" && activeText && (
         <FlashMode

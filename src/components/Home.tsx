@@ -3,6 +3,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db, type Session } from "../db";
 import { Layout } from "./Layout";
 import { SessionCard } from "./SessionCard";
+import { GlobalStats } from "./GlobalStats";
 
 interface HomeProps {
   onNewSession: () => void;
@@ -95,6 +96,11 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               </div>
             )}
           </>
+        )}
+
+        {/* Global stats */}
+        {sessions && sessions.some((s) => s.wpm_history.length > 0) && (
+          <GlobalStats />
         )}
 
         {/* Session list */}

@@ -144,11 +144,17 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
 
         {/* Current word */}
         <p
-          className="text-text font-bold transition-opacity duration-75 px-4 text-center"
           style={{
-            fontSize: `${FONT_SIZES[fontSizeIndex].size * 1.5}rem`,
+            color: "#FFD700",
+            fontWeight: 700,
+            textAlign: "center",
+            padding: "0 24px",
+            fontSize: `clamp(1.5rem, ${FONT_SIZES[fontSizeIndex].size * 4}vw, ${FONT_SIZES[fontSizeIndex].size * 1.5}rem)`,
             opacity: hasStarted ? 1 : 0.3,
             transform: isMirrored ? "scaleX(-1)" : undefined,
+            overflowWrap: "break-word",
+            wordBreak: "break-word",
+            maxWidth: "100%",
           }}
         >
           {hasStarted ? currentWord : words[0] || ""}

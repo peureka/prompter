@@ -3,7 +3,7 @@ import { CONTROLS_HIDE_DELAY } from "../constants";
 
 export function useAutoHide(isPlaying: boolean) {
   const [visible, setVisible] = useState(true);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const resetTimer = useCallback(() => {
     setVisible(true);

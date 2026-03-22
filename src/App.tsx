@@ -56,21 +56,22 @@ function App() {
     setView("detail");
   }, []);
 
-  const handleStartFromDetail = useCallback(async (session: Session) => {
+  const handleStartFromDetail = useCallback(async (session: Session, mode: "scroll" | "flash") => {
     if (session.id === undefined) return;
     await db.sessions.update(session.id, {
       last_practised_at: new Date(),
       practice_count: session.practice_count + 1,
+      mode,
     });
     setActive({
       id: session.id,
       text: session.text,
-      mode: session.mode,
+      mode,
       speed_wpm: session.speed_wpm,
       font_size: session.font_size,
       tags: session.tags,
     });
-    setView(session.mode);
+    setView(mode);
   }, []);
 
   const handleSettingsChange = useCallback(

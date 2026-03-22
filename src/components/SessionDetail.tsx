@@ -6,7 +6,7 @@ import { WpmChart } from "./WpmChart";
 interface SessionDetailProps {
   sessionId: number;
   onBack: () => void;
-  onStart: (session: Session) => void;
+  onStart: (session: Session, mode: "scroll" | "flash") => void;
 }
 
 export function SessionDetail({ sessionId, onBack, onStart }: SessionDetailProps) {
@@ -70,7 +70,7 @@ export function SessionDetail({ sessionId, onBack, onStart }: SessionDetailProps
           <h2 className="text-text text-xl font-bold mb-2">{session.title}</h2>
           <div className="flex items-center gap-3 text-xs text-white/30">
             <span>{words} words</span>
-            <span className="uppercase">{session.mode}</span>
+            <span className="uppercase">Last: {session.mode}</span>
             <span>{session.practice_count}x practised</span>
             {avgWpm && <span>{avgWpm} avg WPM</span>}
           </div>
@@ -124,23 +124,43 @@ export function SessionDetail({ sessionId, onBack, onStart }: SessionDetailProps
           </p>
         </div>
 
-        {/* Start button */}
-        <button
-          onClick={() => onStart(session)}
-          style={{
-            padding: "16px 0",
-            borderRadius: 10,
-            background: "#FFD700",
-            color: "#000",
-            fontWeight: 700,
-            fontSize: "1rem",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "inherit",
-          }}
-        >
-          Practice
-        </button>
+        {/* Mode buttons */}
+        <div style={{ display: "flex", gap: 12 }}>
+          <button
+            onClick={() => onStart(session, "scroll")}
+            style={{
+              flex: 1,
+              padding: "16px 0",
+              borderRadius: 10,
+              background: "#FFD700",
+              color: "#000",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Scroll
+          </button>
+          <button
+            onClick={() => onStart(session, "flash")}
+            style={{
+              flex: 1,
+              padding: "16px 0",
+              borderRadius: 10,
+              background: "rgba(255,215,0,0.15)",
+              color: "#FFD700",
+              fontWeight: 700,
+              fontSize: "1rem",
+              border: "1px solid rgba(255,215,0,0.3)",
+              cursor: "pointer",
+              fontFamily: "inherit",
+            }}
+          >
+            Flash
+          </button>
+        </div>
       </div>
     </Layout>
   );

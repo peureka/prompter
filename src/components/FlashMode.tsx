@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useFlashEngine } from "../lib/hooks/use-flash-engine";
 import { useAutoHide } from "../lib/hooks/use-auto-hide";
+import { useKeyboard } from "../lib/hooks/use-keyboard";
+import { useGestures } from "../lib/hooks/use-gestures";
 import { Layout } from "./Layout";
 import { Countdown } from "./Countdown";
 import { ProgressBar } from "./ProgressBar";
 import { FlashStats } from "./FlashStats";
+import { KeyboardHelp } from "./KeyboardHelp";
 import {
   FLASH_WPM_DEFAULT,
   FLASH_WPM_MIN,
@@ -23,6 +26,8 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const words = useMemo(
     () => text.split(/\s+/).filter(Boolean),
@@ -77,6 +82,22 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
     [onRate, actualWpm, onExit]
   );
 
+  useKeyboard({
+    onTogglePlay: handleTogglePlay,
+    onSpeedUp: () => setWpm((w) => Math.min(w + 10, FLASH_WPM_MAX)),
+    onSpeedDown: () => setWpm((w) => Math.max(w - 10, FLASH_WPM_MIN)),
+    onSkipForward: () => {},
+    onSkipBack: () => {},
+    onExit,
+    onToggleHelp: () => setShowHelp((h) => !h),
+  });
+
+  useGestures(containerRef, {
+    onTap: handleTogglePlay,
+    onSwipeLeft: () => {},
+    onSwipeRight: () => {},
+  });
+
   if (showStats) {
     return (
       <FlashStats
@@ -93,10 +114,11 @@ export function FlashMode({ text, onExit, onRate }: FlashModeProps) {
   return (
     <Layout>
       {showCountdown && <Countdown onComplete={handleCountdownComplete} />}
+      {showHelp && <KeyboardHelp onClose={() => setShowHelp(false)} />}
 
       <div
+        ref={containerRef}
         className="w-full h-full flex flex-col items-center justify-center relative"
-        onClick={handleTogglePlay}
         style={{ cursor: "pointer" }}
       >
         {/* Focal point indicator */}

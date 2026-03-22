@@ -1,10 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useScrollEngine } from "../lib/hooks/use-scroll-engine";
 import { useAutoHide } from "../lib/hooks/use-auto-hide";
+import { useKeyboard } from "../lib/hooks/use-keyboard";
+import { useGestures } from "../lib/hooks/use-gestures";
 import { Layout } from "./Layout";
 import { Countdown } from "./Countdown";
 import { Controls } from "./Controls";
 import { ProgressBar } from "./ProgressBar";
+import { KeyboardHelp } from "./KeyboardHelp";
 import {
   SCROLL_WPM_DEFAULT,
   SCROLL_WPM_MIN,
@@ -25,6 +28,8 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const fontSize = FONT_SIZES[fontSizeIndex].size;
   const lineHeightPx = fontSize * 16 * 1.8;
@@ -66,17 +71,33 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
     reset();
   }, [reset]);
 
-  // Visible window: 3 lines above, 8 lines below current
+  useKeyboard({
+    onTogglePlay: handleTogglePlay,
+    onSpeedUp: () => setWpm((w) => Math.min(w + 10, SCROLL_WPM_MAX)),
+    onSpeedDown: () => setWpm((w) => Math.max(w - 10, SCROLL_WPM_MIN)),
+    onSkipForward: () => {},
+    onSkipBack: () => {},
+    onExit,
+    onToggleHelp: () => setShowHelp((h) => !h),
+  });
+
+  useGestures(containerRef, {
+    onTap: handleTogglePlay,
+    onSwipeLeft: () => {},
+    onSwipeRight: () => {},
+  });
+
   const visibleAbove = 3;
   const visibleBelow = 8;
 
   return (
     <Layout>
       {showCountdown && <Countdown onComplete={handleCountdownComplete} />}
+      {showHelp && <KeyboardHelp onClose={() => setShowHelp(false)} />}
 
       <div
+        ref={containerRef}
         className="w-full h-full overflow-hidden relative px-6"
-        onClick={handleTogglePlay}
         style={{ cursor: "pointer" }}
       >
         <div
@@ -100,15 +121,11 @@ export function ScrollMode({ text, onExit }: ScrollModeProps) {
               opacity = 0.6 - (distance - 1) * 0.06;
 
             if (!hasStarted) {
-              // Before start, show first lines at readable opacity
               if (i <= visibleBelow) opacity = i === 0 ? 1 : 0.6 - i * 0.06;
             }
 
             if (isPause) return (
-              <div
-                key={i}
-                style={{ height: lineHeightPx, opacity: 0 }}
-              />
+              <div key={i} style={{ height: lineHeightPx, opacity: 0 }} />
             );
 
             return (

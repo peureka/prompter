@@ -1,6 +1,10 @@
 import { useState, useCallback } from "react";
 import { cleanText } from "../lib/text-cleaner";
-import { wordCount, estimatedDurationSeconds, formatDuration } from "../lib/wpm";
+import {
+  wordCount,
+  estimatedDurationSeconds,
+  formatDuration,
+} from "../lib/wpm";
 import { SCROLL_WPM_DEFAULT } from "../lib/constants";
 import { Layout } from "./Layout";
 
@@ -26,7 +30,7 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
         setTitle(cleaned.split(/\s+/).slice(0, 5).join(" "));
       }
     } catch {
-      // Clipboard API not available, user can paste manually
+      // Clipboard API not available
     }
   }, [title]);
 
@@ -50,17 +54,17 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full p-6 gap-4">
+      <div className="flex flex-col h-full px-6 py-8 gap-5">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button
             onClick={onBack}
-            className="text-white/50 hover:text-white transition-colors text-sm"
+            className="text-white/40 hover:text-white transition-colors text-sm py-1 px-2 -ml-2"
           >
             &larr; Back
           </button>
-          <h1 className="text-text text-lg font-bold">New Session</h1>
-          <div className="w-12" />
+          <h1 className="text-text text-xl font-bold">New Session</h1>
+          <div className="w-14" />
         </div>
 
         {/* Title */}
@@ -69,27 +73,27 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Title (optional)"
-          className="bg-transparent border border-white/15 rounded-lg px-4 py-2 text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors"
+          className="bg-transparent border border-white/15 rounded-lg px-4 py-3 text-text placeholder:text-white/20 outline-none focus:border-text/50 transition-colors text-sm"
         />
 
         {/* Mode toggle */}
         <div className="flex gap-2">
           <button
             onClick={() => setMode("scroll")}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
               mode === "scroll"
                 ? "bg-text text-bg"
-                : "bg-white/8 text-white/50 hover:text-white"
+                : "bg-white/8 text-white/40 hover:text-white"
             }`}
           >
             Scroll
           </button>
           <button
             onClick={() => setMode("flash")}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors ${
+            className={`flex-1 py-3 rounded-lg text-sm font-bold transition-colors ${
               mode === "flash"
                 ? "bg-text text-bg"
-                : "bg-white/8 text-white/50 hover:text-white"
+                : "bg-white/8 text-white/40 hover:text-white"
             }`}
           >
             Flash
@@ -105,21 +109,21 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
         />
 
         {/* Stats + Actions */}
-        <div className="flex items-center justify-between text-xs text-white/40">
-          <span>
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-white/30">
             {words} words &middot; ~{formatDuration(duration)} at{" "}
             {SCROLL_WPM_DEFAULT} WPM
           </span>
           <div className="flex gap-2">
             <button
               onClick={handlePasteAndClean}
-              className="px-3 py-1 rounded bg-white/8 text-white/60 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-lg bg-white/8 text-white/50 hover:text-white transition-colors text-xs"
             >
               Paste & Clean
             </button>
             <button
               onClick={handleClean}
-              className="px-3 py-1 rounded bg-white/8 text-white/60 hover:text-white transition-colors"
+              className="px-4 py-2 rounded-lg bg-white/8 text-white/50 hover:text-white transition-colors text-xs"
             >
               Clean
             </button>
@@ -130,7 +134,7 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
         <button
           onClick={handleStart}
           disabled={!text.trim()}
-          className="py-4 rounded-lg bg-text text-bg font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+          className="btn-primary py-4 rounded-lg bg-text text-bg font-bold text-lg hover:opacity-90 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
         >
           Start
         </button>

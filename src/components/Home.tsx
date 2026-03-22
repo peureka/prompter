@@ -42,13 +42,15 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full p-6 gap-4">
+      <div className="flex flex-col h-full px-6 py-8 gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h1 className="text-text text-2xl font-bold">Prompter</h1>
+          <h1 className="text-text text-3xl font-bold tracking-tight">
+            Prompter
+          </h1>
           <button
             onClick={onNewSession}
-            className="px-4 py-2 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
+            className="btn-primary px-6 py-2.5 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
           >
             + New
           </button>
@@ -62,7 +64,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search sessions..."
-              className="bg-transparent border border-white/15 rounded-lg px-4 py-2 text-text text-sm placeholder:text-white/20 outline-none focus:border-text/50 transition-colors"
+              className="bg-transparent border border-white/15 rounded-lg px-4 py-3 text-text text-sm placeholder:text-white/20 outline-none focus:border-text/50 transition-colors"
             />
 
             {/* Tag filters */}
@@ -70,7 +72,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => setTagFilter(null)}
-                  className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                  className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
                     tagFilter === null
                       ? "bg-text text-bg"
                       : "bg-white/8 text-white/40 hover:text-white"
@@ -84,7 +86,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
                     onClick={() =>
                       setTagFilter(tagFilter === tag ? null : tag)
                     }
-                    className={`px-3 py-1 rounded-full text-xs transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-xs transition-colors ${
                       tagFilter === tag
                         ? "bg-text text-bg"
                         : "bg-white/8 text-white/40 hover:text-white"
@@ -119,7 +121,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               No matching sessions
             </p>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full gap-2">
+            <div className="flex flex-col items-center justify-center h-full gap-3">
               <p className="text-white/30 text-sm">No saved sessions yet</p>
               <p className="text-white/20 text-xs">
                 Tap "+ New" to get started

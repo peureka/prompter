@@ -1,46 +1,48 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PAUSE_MARKER, PAUSE_DURATION_MS } from "../constants";
+import { wordCount } from "../wpm";
 
 interface ScrollState {
-  scrollY: number;
-  currentLineIndex: number;
+  scrollTop: number;
   progress: number;
-  elapsedMs: number;
   isComplete: boolean;
 }
 
 interface UseScrollEngineOptions {
-  lines: string[];
+  text: string;
   wpm: number;
   isPlaying: boolean;
-  lineHeightPx: number;
-  wordsPerLine: number;
+  containerRef: React.RefObject<HTMLElement | null>;
 }
 
 export function useScrollEngine({
-  lines,
+  text,
   wpm,
   isPlaying,
-  lineHeightPx,
-  wordsPerLine,
-}: UseScrollEngineOptions): ScrollState {
+  containerRef,
+}: UseScrollEngineOptions) {
   const [state, setState] = useState<ScrollState>({
-    scrollY: 0,
-    currentLineIndex: 0,
+    scrollTop: 0,
     progress: 0,
-    elapsedMs: 0,
     isComplete: false,
   });
 
-  const scrollYRef = useRef(0);
+  const scrollTopRef = useRef(0);
   const lastTimestampRef = useRef<number | null>(null);
-  const pauseUntilRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
 
-  const totalHeight = lines.length * lineHeightPx;
-  const pixelsPerMs = totalHeight > 0
-    ? (wpm / wordsPerLine) * lineHeightPx / 60000
-    : 0;
+  // Calculate scroll speed: pixels per millisecond
+  // Total words / WPM = minutes to read. Convert to ms.
+  // scrollHeight / totalMs = pixels per ms
+  const getPixelsPerMs = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return 0;
+    const scrollableHeight = el.scrollHeight - el.clientHeight;
+    if (scrollableHeight <= 0) return 0;
+    const totalWords = wordCount(text);
+    const totalMs = (totalWords / wpm) * 60000;
+    return totalMs > 0 ? scrollableHeight / totalMs : 0;
+  }, [containerRef, text, wpm]);
 
   const tick = useCallback(
     (timestamp: number) => {
@@ -53,53 +55,39 @@ export function useScrollEngine({
       const deltaMs = timestamp - lastTimestampRef.current;
       lastTimestampRef.current = timestamp;
 
-      // Handle pause
-      if (pauseUntilRef.current !== null) {
-        if (timestamp < pauseUntilRef.current) {
-          rafRef.current = requestAnimationFrame(tick);
-          return;
-        }
-        pauseUntilRef.current = null;
+      const el = containerRef.current;
+      if (!el) {
+        rafRef.current = requestAnimationFrame(tick);
+        return;
       }
 
-      const newScrollY = scrollYRef.current + pixelsPerMs * deltaMs;
-      const maxScroll = totalHeight;
+      const scrollableHeight = el.scrollHeight - el.clientHeight;
+      const pixelsPerMs = getPixelsPerMs();
+      const newScrollTop = scrollTopRef.current + pixelsPerMs * deltaMs;
 
-      if (newScrollY >= maxScroll) {
-        scrollYRef.current = maxScroll;
+      if (newScrollTop >= scrollableHeight) {
+        scrollTopRef.current = scrollableHeight;
+        el.scrollTop = scrollableHeight;
         setState({
-          scrollY: maxScroll,
-          currentLineIndex: lines.length - 1,
+          scrollTop: scrollableHeight,
           progress: 1,
-          elapsedMs: 0,
           isComplete: true,
         });
         return;
       }
 
-      scrollYRef.current = newScrollY;
-      const currentLine = Math.floor(newScrollY / lineHeightPx);
-
-      // Check for pause marker on current line
-      if (
-        currentLine < lines.length &&
-        lines[currentLine].trim() === PAUSE_MARKER &&
-        pauseUntilRef.current === null
-      ) {
-        pauseUntilRef.current = timestamp + PAUSE_DURATION_MS;
-      }
+      scrollTopRef.current = newScrollTop;
+      el.scrollTop = newScrollTop;
 
       setState({
-        scrollY: newScrollY,
-        currentLineIndex: Math.min(currentLine, lines.length - 1),
-        progress: maxScroll > 0 ? newScrollY / maxScroll : 0,
-        elapsedMs: 0,
+        scrollTop: newScrollTop,
+        progress: scrollableHeight > 0 ? newScrollTop / scrollableHeight : 0,
         isComplete: false,
       });
 
       rafRef.current = requestAnimationFrame(tick);
     },
-    [pixelsPerMs, totalHeight, lineHeightPx, lines]
+    [containerRef, getPixelsPerMs]
   );
 
   useEffect(() => {
@@ -113,17 +101,16 @@ export function useScrollEngine({
   }, [isPlaying, tick, state.isComplete]);
 
   const reset = useCallback(() => {
-    scrollYRef.current = 0;
+    scrollTopRef.current = 0;
     lastTimestampRef.current = null;
-    pauseUntilRef.current = null;
+    const el = containerRef.current;
+    if (el) el.scrollTop = 0;
     setState({
-      scrollY: 0,
-      currentLineIndex: 0,
+      scrollTop: 0,
       progress: 0,
-      elapsedMs: 0,
       isComplete: false,
     });
-  }, []);
+  }, [containerRef]);
 
-  return { ...state, reset } as ScrollState & { reset: () => void };
+  return { ...state, reset };
 }

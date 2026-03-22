@@ -33,25 +33,26 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
   const [showHelp, setShowHelp] = useState(false);
   const [isMirrored, setIsMirrored] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
   const fontSize = FONT_SIZES[fontSizeIndex].size;
-  const lineHeightPx = fontSize * 16 * 1.8;
-  const wordsPerLine = 8;
 
-  const lines = useMemo(
-    () => text.split("\n").filter((l) => l.trim().length > 0),
+  const paragraphs = useMemo(
+    () =>
+      text
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter(Boolean),
     [text]
   );
 
-  const { scrollY, currentLineIndex, progress, isComplete, reset } =
-    useScrollEngine({
-      lines,
-      wpm,
-      isPlaying,
-      lineHeightPx,
-      wordsPerLine,
-    }) as ReturnType<typeof useScrollEngine> & { reset: () => void };
+  const { progress, isComplete, reset } = useScrollEngine({
+    text,
+    wpm,
+    isPlaying,
+    containerRef: scrollRef,
+  });
 
   const { controlsVisible } = useAutoHide(isPlaying);
 
@@ -93,9 +94,6 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
     onSwipeRight: () => {},
   });
 
-  const visibleAbove = 3;
-  const visibleBelow = 8;
-
   return (
     <Layout>
       {showCountdown && <Countdown onComplete={handleCountdownComplete} />}
@@ -103,53 +101,65 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
 
       <div
         ref={containerRef}
-        className={`w-full h-full overflow-hidden relative px-6 ${isPlaying ? "playing-mode" : ""}`}
+        className={`w-full h-full relative ${isPlaying ? "playing-mode" : ""}`}
         style={{ cursor: "pointer" }}
       >
+        {/* Gradient masks for top and bottom fade */}
         <div
-          className="absolute w-full left-0 px-6 transition-transform"
+          className="absolute top-0 left-0 w-full z-10 pointer-events-none"
           style={{
-            transform: `translateY(${-scrollY + lineHeightPx * 4}px)${isMirrored ? " scaleX(-1)" : ""}`,
+            height: "20%",
+            background: "linear-gradient(to bottom, #000 0%, transparent 100%)",
+          }}
+        />
+        <div
+          className="absolute bottom-0 left-0 w-full z-10 pointer-events-none"
+          style={{
+            height: "30%",
+            background: "linear-gradient(to top, #000 0%, transparent 100%)",
+          }}
+        />
+
+        {/* Scrollable text container */}
+        <div
+          ref={scrollRef}
+          className="w-full h-full overflow-hidden px-8 md:px-12"
+          style={{
+            scrollBehavior: "auto",
+            overflowY: "hidden",
           }}
         >
-          {lines.map((line, i) => {
-            const distance = Math.abs(i - currentLineIndex);
-            const isAbove = i < currentLineIndex;
-            const isBelow = i > currentLineIndex;
-            const isCurrent = i === currentLineIndex;
-            const isPause = line.trim() === PAUSE_MARKER;
+          {/* Top spacer — pushes first text to vertical center */}
+          <div style={{ height: "40vh" }} />
 
-            let opacity = 0;
-            if (isCurrent) opacity = 1;
-            else if (isAbove && distance <= visibleAbove)
-              opacity = 0.3 - (distance - 1) * 0.08;
-            else if (isBelow && distance <= visibleBelow)
-              opacity = 0.6 - (distance - 1) * 0.06;
+          <div
+            style={{
+              transform: isMirrored ? "scaleX(-1)" : undefined,
+            }}
+          >
+            {paragraphs.map((para, i) => {
+              const isPause = para.trim() === PAUSE_MARKER;
+              if (isPause) {
+                return <div key={i} className="h-8" />;
+              }
+              return (
+                <p
+                  key={i}
+                  className="mb-8 leading-relaxed"
+                  style={{
+                    fontSize: `${fontSize}rem`,
+                    lineHeight: 1.7,
+                    wordBreak: "break-word",
+                  }}
+                >
+                  {para}
+                </p>
+              );
+            })}
+          </div>
 
-            if (!hasStarted) {
-              if (i <= visibleBelow) opacity = i === 0 ? 1 : 0.6 - i * 0.06;
-            }
-
-            if (isPause) return (
-              <div key={i} style={{ height: lineHeightPx, opacity: 0 }} />
-            );
-
-            return (
-              <div
-                key={i}
-                className="transition-opacity duration-150"
-                style={{
-                  fontSize: `${fontSize}rem`,
-                  lineHeight: `${lineHeightPx}px`,
-                  height: lineHeightPx,
-                  opacity,
-                  fontWeight: isCurrent ? 700 : 400,
-                }}
-              >
-                {line}
-              </div>
-            );
-          })}
+          {/* Bottom spacer — allows last text to scroll to center */}
+          <div style={{ height: "60vh" }} />
         </div>
       </div>
 
@@ -184,28 +194,32 @@ export function ScrollMode({ text, onExit, onComplete }: ScrollModeProps) {
                 <button
                   key={rating}
                   onClick={() => onComplete?.(wpm, rating)}
-                  className={`px-5 py-2 rounded-lg text-sm transition-colors ${
+                  className={`px-5 py-2.5 rounded-lg text-sm transition-colors ${
                     rating === "good"
                       ? "bg-text text-bg font-bold hover:opacity-90"
                       : "border border-white/15 text-white/60 hover:text-text hover:border-text/30"
                   }`}
                 >
-                  {rating === "slow" ? "Too slow" : rating === "fast" ? "Too fast" : "Good"}
+                  {rating === "slow"
+                    ? "Too slow"
+                    : rating === "fast"
+                      ? "Too fast"
+                      : "Good"}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 mt-2">
             <button
               onClick={handleReset}
-              className="px-6 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
+              className="btn-primary px-8 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
             >
               Again
             </button>
             <button
               onClick={onExit}
-              className="px-6 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
+              className="btn-primary px-8 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
             >
               Back
             </button>

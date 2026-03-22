@@ -54,7 +54,7 @@ export function TextInput({ onStart, onBack }: TextInputProps) {
 
   return (
     <Layout>
-      <div className="flex flex-col h-full px-6 py-8 gap-5">
+      <div className="flex flex-col h-full py-10 gap-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <button

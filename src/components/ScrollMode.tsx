@@ -18,6 +18,34 @@ import {
   PAUSE_MARKER,
 } from "../lib/constants";
 
+// Focal point at 38% of viewport height
+const FOCAL_RATIO = 0.38;
+
+// Opacity curve: how quickly text fades based on distance from focal point
+// Distance in pixels → opacity
+function getEmphasis(distancePx: number): { opacity: number; scale: number } {
+  const absDist = Math.abs(distancePx);
+  // Within 40px of focal: full brightness
+  if (absDist < 40) return { opacity: 1, scale: 1.04 };
+  // 40-120px: bright
+  if (absDist < 120) {
+    const t = (absDist - 40) / 80;
+    return { opacity: 1 - t * 0.35, scale: 1.04 - t * 0.04 };
+  }
+  // 120-250px: medium
+  if (absDist < 250) {
+    const t = (absDist - 120) / 130;
+    return { opacity: 0.65 - t * 0.35, scale: 1 };
+  }
+  // 250-400px: dim
+  if (absDist < 400) {
+    const t = (absDist - 250) / 150;
+    return { opacity: 0.3 - t * 0.18, scale: 1 };
+  }
+  // Beyond: very dim
+  return { opacity: 0.1, scale: 1 };
+}
+
 interface ScrollModeProps {
   text: string;
   onExit: () => void;
@@ -27,9 +55,18 @@ interface ScrollModeProps {
   onSettingsChange?: (wpm: number, fontSizeIndex: number) => void;
 }
 
-export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSize, onSettingsChange }: ScrollModeProps) {
+export function ScrollMode({
+  text,
+  onExit,
+  onComplete,
+  initialWpm,
+  initialFontSize,
+  onSettingsChange,
+}: ScrollModeProps) {
   const [wpm, setWpm] = useState(initialWpm ?? SCROLL_WPM_DEFAULT);
-  const [fontSizeIndex, setFontSizeIndex] = useState(initialFontSize ?? FONT_SIZE_DEFAULT);
+  const [fontSizeIndex, setFontSizeIndex] = useState(
+    initialFontSize ?? FONT_SIZE_DEFAULT
+  );
   const [isPlaying, setIsPlaying] = useState(false);
   const [showCountdown, setShowCountdown] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
@@ -38,9 +75,10 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const pauseRefs = useRef<(HTMLElement | null)[]>([]);
+  const paraRefs = useRef<(HTMLElement | null)[]>([]);
+  const emphasisRafRef = useRef<number>(0);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
-  // Persist settings changes
   useEffect(() => {
     onSettingsChange?.(wpm, fontSizeIndex);
   }, [wpm, fontSizeIndex, onSettingsChange]);
@@ -64,6 +102,34 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
     pauseElements: pauseRefs,
   });
 
+  // Dynamic emphasis: update paragraph opacity/scale on every frame during playback
+  const updateEmphasis = useCallback(() => {
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+    const focalY =
+      scrollEl.getBoundingClientRect().top + scrollEl.clientHeight * FOCAL_RATIO;
+
+    for (let i = 0; i < paraRefs.current.length; i++) {
+      const el = paraRefs.current[i];
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      const paraCenter = rect.top + rect.height / 2;
+      const distance = paraCenter - focalY;
+      const { opacity, scale } = getEmphasis(distance);
+      el.style.opacity = String(opacity);
+      el.style.transform = scale !== 1 ? `scale(${scale})` : "";
+    }
+
+    emphasisRafRef.current = requestAnimationFrame(updateEmphasis);
+  }, []);
+
+  useEffect(() => {
+    if (hasStarted) {
+      emphasisRafRef.current = requestAnimationFrame(updateEmphasis);
+    }
+    return () => cancelAnimationFrame(emphasisRafRef.current);
+  }, [hasStarted, updateEmphasis]);
+
   const { controlsVisible } = useAutoHide(isPlaying);
 
   const handleTogglePlay = useCallback(() => {
@@ -84,6 +150,13 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
     setIsPlaying(false);
     setHasStarted(false);
     reset();
+    // Reset all emphasis
+    for (const el of paraRefs.current) {
+      if (el) {
+        el.style.opacity = "1";
+        el.style.transform = "";
+      }
+    }
   }, [reset]);
 
   useKeyboard({
@@ -114,28 +187,20 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
         className={`w-full h-full relative ${isPlaying ? "playing-mode" : ""}`}
         style={{ cursor: "pointer" }}
       >
-        {/* Gradient masks — fade top/bottom, highlight center reading line */}
+        {/* Top/bottom edge fades — tighter than before */}
         <div
           className="absolute top-0 left-0 w-full z-10 pointer-events-none"
           style={{
-            height: "35%",
-            background: "linear-gradient(to bottom, #000 0%, transparent 100%)",
+            height: "25%",
+            background:
+              "linear-gradient(to bottom, #000 0%, transparent 100%)",
           }}
         />
         <div
           className="absolute bottom-0 left-0 w-full z-10 pointer-events-none"
           style={{
-            height: "40%",
+            height: "30%",
             background: "linear-gradient(to top, #000 0%, transparent 100%)",
-          }}
-        />
-        {/* Focal line indicator */}
-        <div
-          className="absolute left-0 w-full z-10 pointer-events-none"
-          style={{
-            top: "38%",
-            height: 2,
-            background: "linear-gradient(to right, transparent 0%, rgba(255,215,0,0.15) 20%, rgba(255,215,0,0.15) 80%, transparent 100%)",
           }}
         />
 
@@ -143,13 +208,10 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
         <div
           ref={scrollRef}
           className="w-full h-full overflow-hidden px-8 md:px-12"
-          style={{
-            scrollBehavior: "auto",
-            overflowY: "hidden",
-          }}
+          style={{ overflowY: "hidden" }}
         >
-          {/* Top spacer — pushes first text to vertical center */}
-          <div style={{ height: "40vh" }} />
+          {/* Top spacer — pushes first text to focal point */}
+          <div style={{ height: `${FOCAL_RATIO * 100}vh` }} />
 
           <div
             style={{
@@ -163,18 +225,26 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
                   <div
                     key={i}
                     className="h-8"
-                    ref={(el) => { pauseRefs.current[i] = el; }}
+                    ref={(el) => {
+                      pauseRefs.current[i] = el;
+                    }}
                   />
                 );
               }
               return (
                 <p
                   key={i}
-                  className="mb-8 leading-relaxed"
+                  ref={(el) => {
+                    paraRefs.current[i] = el;
+                  }}
+                  className="mb-8"
                   style={{
                     fontSize: `${fontSize}rem`,
                     lineHeight: 1.7,
                     wordBreak: "break-word",
+                    transformOrigin: "left center",
+                    willChange: "opacity, transform",
+                    transition: "none",
                   }}
                 >
                   {para}
@@ -183,7 +253,7 @@ export function ScrollMode({ text, onExit, onComplete, initialWpm, initialFontSi
             })}
           </div>
 
-          {/* Bottom spacer — allows last text to scroll to center */}
+          {/* Bottom spacer */}
           <div style={{ height: "60vh" }} />
         </div>
       </div>

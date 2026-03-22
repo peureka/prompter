@@ -2,6 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { wordCount } from "../wpm";
 import { PAUSE_DURATION_MS } from "../constants";
 
+const FOCAL_RATIO = 0.38;
+const EASE_DURATION_MS = 300; // decel/accel duration around pauses
+
 interface ScrollState {
   scrollTop: number;
   progress: number;
@@ -32,7 +35,10 @@ export function useScrollEngine({
   const scrollTopRef = useRef(0);
   const lastTimestampRef = useRef<number | null>(null);
   const rafRef = useRef<number>(0);
-  const pauseUntilRef = useRef<number | null>(null);
+
+  // Pause state
+  const pausePhaseRef = useRef<"none" | "decel" | "hold" | "accel">("none");
+  const pausePhaseStartRef = useRef<number>(0);
   const pausedIndicesRef = useRef<Set<number>>(new Set());
 
   const getPixelsPerMs = useCallback(() => {
@@ -53,16 +59,6 @@ export function useScrollEngine({
         return;
       }
 
-      // Handle active pause
-      if (pauseUntilRef.current !== null) {
-        if (timestamp < pauseUntilRef.current) {
-          lastTimestampRef.current = timestamp;
-          rafRef.current = requestAnimationFrame(tick);
-          return;
-        }
-        pauseUntilRef.current = null;
-      }
-
       const deltaMs = timestamp - lastTimestampRef.current;
       lastTimestampRef.current = timestamp;
 
@@ -72,29 +68,66 @@ export function useScrollEngine({
         return;
       }
 
+      // Calculate speed multiplier based on pause phase
+      let speedMultiplier = 1;
+      const phase = pausePhaseRef.current;
+
+      if (phase === "decel") {
+        const elapsed = timestamp - pausePhaseStartRef.current;
+        if (elapsed >= EASE_DURATION_MS) {
+          pausePhaseRef.current = "hold";
+          pausePhaseStartRef.current = timestamp;
+          speedMultiplier = 0;
+        } else {
+          speedMultiplier = 1 - elapsed / EASE_DURATION_MS;
+        }
+      } else if (phase === "hold") {
+        const elapsed = timestamp - pausePhaseStartRef.current;
+        if (elapsed >= PAUSE_DURATION_MS) {
+          pausePhaseRef.current = "accel";
+          pausePhaseStartRef.current = timestamp;
+        }
+        speedMultiplier = 0;
+      } else if (phase === "accel") {
+        const elapsed = timestamp - pausePhaseStartRef.current;
+        if (elapsed >= EASE_DURATION_MS) {
+          pausePhaseRef.current = "none";
+          speedMultiplier = 1;
+        } else {
+          speedMultiplier = elapsed / EASE_DURATION_MS;
+        }
+      }
+
       const scrollableHeight = el.scrollHeight - el.clientHeight;
       const pixelsPerMs = getPixelsPerMs();
-      const newScrollTop = scrollTopRef.current + pixelsPerMs * deltaMs;
+      const newScrollTop =
+        scrollTopRef.current + pixelsPerMs * deltaMs * speedMultiplier;
 
       if (newScrollTop >= scrollableHeight) {
         scrollTopRef.current = scrollableHeight;
         el.scrollTop = scrollableHeight;
-        setState({ scrollTop: scrollableHeight, progress: 1, isComplete: true });
+        setState({
+          scrollTop: scrollableHeight,
+          progress: 1,
+          isComplete: true,
+        });
         return;
       }
 
       scrollTopRef.current = newScrollTop;
       el.scrollTop = newScrollTop;
 
-      // Check if any pause element is at the focal point (~40% of viewport)
-      if (pauseElements?.current) {
-        const focalY = el.getBoundingClientRect().top + el.clientHeight * 0.4;
+      // Check pause elements at focal point
+      if (pauseElements?.current && pausePhaseRef.current === "none") {
+        const focalY =
+          el.getBoundingClientRect().top + el.clientHeight * FOCAL_RATIO;
         pauseElements.current.forEach((pauseEl, i) => {
           if (!pauseEl || pausedIndicesRef.current.has(i)) return;
           const rect = pauseEl.getBoundingClientRect();
           if (rect.top <= focalY && rect.bottom >= focalY - 20) {
             pausedIndicesRef.current.add(i);
-            pauseUntilRef.current = timestamp + PAUSE_DURATION_MS;
+            pausePhaseRef.current = "decel";
+            pausePhaseStartRef.current = timestamp;
           }
         });
       }
@@ -120,7 +153,6 @@ export function useScrollEngine({
     return () => cancelAnimationFrame(rafRef.current);
   }, [isPlaying, tick, state.isComplete]);
 
-  // Skip forward/back by adjusting scrollTop
   const skip = useCallback(
     (deltaSeconds: number) => {
       const el = containerRef.current;
@@ -128,7 +160,10 @@ export function useScrollEngine({
       const pixelsPerMs = getPixelsPerMs();
       const deltaPixels = pixelsPerMs * deltaSeconds * 1000;
       const scrollableHeight = el.scrollHeight - el.clientHeight;
-      const newTop = Math.max(0, Math.min(scrollTopRef.current + deltaPixels, scrollableHeight));
+      const newTop = Math.max(
+        0,
+        Math.min(scrollTopRef.current + deltaPixels, scrollableHeight)
+      );
       scrollTopRef.current = newTop;
       el.scrollTop = newTop;
       setState((s) => ({
@@ -143,7 +178,7 @@ export function useScrollEngine({
   const reset = useCallback(() => {
     scrollTopRef.current = 0;
     lastTimestampRef.current = null;
-    pauseUntilRef.current = null;
+    pausePhaseRef.current = "none";
     pausedIndicesRef.current = new Set();
     const el = containerRef.current;
     if (el) el.scrollTop = 0;

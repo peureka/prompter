@@ -278,43 +278,77 @@ export function ScrollMode({
       <ProgressBar progress={progress} />
 
       {isComplete && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-bg/90 gap-8">
-          <p className="text-text text-2xl font-bold">Done</p>
-          <p className="text-white/40 text-sm">at {wpm} WPM</p>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0,0,0,0.92)",
+            gap: 32,
+          }}
+        >
+          <p style={{ color: "#FFD700", fontSize: "1.5rem", fontWeight: 700 }}>Done</p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.875rem" }}>at {wpm} WPM</p>
 
-          <div className="flex flex-col items-center gap-3">
-            <p className="text-white/60 text-sm">How did that feel?</p>
-            <div className="flex gap-3">
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+            <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>How did that feel?</p>
+            <div style={{ display: "flex", gap: 12 }}>
               {(["slow", "good", "fast"] as const).map((rating) => (
                 <button
                   key={rating}
                   onClick={() => onComplete?.(wpm, rating)}
-                  className={`px-5 py-2.5 rounded-lg text-sm transition-colors ${
-                    rating === "good"
-                      ? "bg-text text-bg font-bold hover:opacity-90"
-                      : "border border-white/15 text-white/60 hover:text-text hover:border-text/30"
-                  }`}
+                  style={{
+                    padding: "12px 24px",
+                    borderRadius: 10,
+                    fontSize: "0.875rem",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    border: rating === "good" ? "none" : "1px solid rgba(255,255,255,0.15)",
+                    background: rating === "good" ? "#FFD700" : "transparent",
+                    color: rating === "good" ? "#000" : "rgba(255,255,255,0.6)",
+                    fontWeight: rating === "good" ? 700 : 400,
+                  }}
                 >
-                  {rating === "slow"
-                    ? "Too slow"
-                    : rating === "fast"
-                      ? "Too fast"
-                      : "Good"}
+                  {rating === "slow" ? "Too slow" : rating === "fast" ? "Too fast" : "Good"}
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="flex gap-4 mt-2">
+          <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
             <button
               onClick={handleReset}
-              className="px-8 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
+              style={{
+                padding: "14px 32px",
+                borderRadius: 10,
+                background: "#FFD700",
+                color: "#000",
+                fontWeight: 700,
+                fontSize: "1rem",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
             >
               Again
             </button>
             <button
               onClick={onExit}
-              className="px-8 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
+              style={{
+                padding: "14px 32px",
+                borderRadius: 10,
+                background: "transparent",
+                color: "#FFD700",
+                fontWeight: 700,
+                fontSize: "1rem",
+                border: "1px solid rgba(255,215,0,0.3)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
             >
               Back
             </button>

@@ -10,6 +10,30 @@ interface FlashStatsProps {
   onBack: () => void;
 }
 
+const ratingBtn = (active: boolean) => ({
+  padding: "12px 24px",
+  borderRadius: 10,
+  fontSize: "0.875rem",
+  fontFamily: "inherit",
+  cursor: "pointer" as const,
+  border: active ? "none" : "1px solid rgba(255,255,255,0.15)",
+  background: active ? "#FFD700" : "transparent",
+  color: active ? "#000" : "rgba(255,255,255,0.6)",
+  fontWeight: active ? 700 : 400,
+});
+
+const actionBtn = (primary: boolean) => ({
+  padding: "14px 32px",
+  borderRadius: 10,
+  fontSize: "1rem",
+  fontFamily: "inherit",
+  cursor: "pointer" as const,
+  fontWeight: 700,
+  border: primary ? "none" : "1px solid rgba(255,215,0,0.3)",
+  background: primary ? "#FFD700" : "transparent",
+  color: primary ? "#000" : "#FFD700",
+});
+
 export function FlashStats({
   actualWpm,
   totalWords,
@@ -20,63 +44,50 @@ export function FlashStats({
 }: FlashStatsProps) {
   return (
     <Layout>
-      <div className="flex flex-col h-full items-center justify-center gap-8 p-6">
-        <h2 className="text-text text-2xl font-bold">Session Complete</h2>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 32,
+          padding: 24,
+        }}
+      >
+        <h2 style={{ color: "#FFD700", fontSize: "1.5rem", fontWeight: 700 }}>
+          Session Complete
+        </h2>
 
-        <div className="flex gap-8 text-center">
+        <div style={{ display: "flex", gap: 40, textAlign: "center" }}>
           <div>
-            <p className="text-3xl font-bold text-text">{actualWpm}</p>
-            <p className="text-white/40 text-xs mt-1">WPM</p>
+            <p style={{ fontSize: "1.875rem", fontWeight: 700, color: "#FFD700" }}>{actualWpm}</p>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", marginTop: 4 }}>WPM</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-text">{totalWords}</p>
-            <p className="text-white/40 text-xs mt-1">Words</p>
+            <p style={{ fontSize: "1.875rem", fontWeight: 700, color: "#FFD700" }}>{totalWords}</p>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", marginTop: 4 }}>Words</p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-text">
+            <p style={{ fontSize: "1.875rem", fontWeight: 700, color: "#FFD700" }}>
               {formatDuration(elapsedMs / 1000)}
             </p>
-            <p className="text-white/40 text-xs mt-1">Duration</p>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", marginTop: 4 }}>Duration</p>
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-white/60 text-sm">How did that feel?</p>
-          <div className="flex gap-3">
-            <button
-              onClick={() => onRate("slow")}
-              className="px-5 py-2 rounded-lg border border-white/15 text-white/60 hover:text-text hover:border-text/30 transition-colors text-sm"
-            >
-              Too slow
-            </button>
-            <button
-              onClick={() => onRate("good")}
-              className="px-5 py-2 rounded-lg bg-text text-bg font-bold text-sm hover:opacity-90 transition-opacity"
-            >
-              Good
-            </button>
-            <button
-              onClick={() => onRate("fast")}
-              className="px-5 py-2 rounded-lg border border-white/15 text-white/60 hover:text-text hover:border-text/30 transition-colors text-sm"
-            >
-              Too fast
-            </button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>How did that feel?</p>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={() => onRate("slow")} style={ratingBtn(false)}>Too slow</button>
+            <button onClick={() => onRate("good")} style={ratingBtn(true)}>Good</button>
+            <button onClick={() => onRate("fast")} style={ratingBtn(false)}>Too fast</button>
           </div>
         </div>
 
-        <div className="flex gap-4 mt-4">
-          <button
-            onClick={onAgain}
-            className="px-6 py-3 rounded-lg bg-text text-bg font-bold hover:opacity-90 transition-opacity"
-          >
-            Again
-          </button>
-          <button
-            onClick={onBack}
-            className="px-6 py-3 rounded-lg border border-text/30 text-text hover:bg-text/10 transition-colors"
-          >
-            Back
-          </button>
+        <div style={{ display: "flex", gap: 16, marginTop: 8 }}>
+          <button onClick={onAgain} style={actionBtn(true)}>Again</button>
+          <button onClick={onBack} style={actionBtn(false)}>Back</button>
         </div>
       </div>
     </Layout>

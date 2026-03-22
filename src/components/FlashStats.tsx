@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatDuration } from "../lib/wpm";
 import { Layout } from "./Layout";
 
@@ -9,18 +10,6 @@ interface FlashStatsProps {
   onAgain: () => void;
   onBack: () => void;
 }
-
-const ratingBtn = (active: boolean) => ({
-  padding: "12px 24px",
-  borderRadius: 10,
-  fontSize: "0.875rem",
-  fontFamily: "inherit",
-  cursor: "pointer" as const,
-  border: active ? "none" : "1px solid rgba(255,255,255,0.15)",
-  background: active ? "#FFD700" : "transparent",
-  color: active ? "#000" : "rgba(255,255,255,0.6)",
-  fontWeight: active ? 700 : 400,
-});
 
 const actionBtn = (primary: boolean) => ({
   padding: "14px 32px",
@@ -42,6 +31,8 @@ export function FlashStats({
   onAgain,
   onBack,
 }: FlashStatsProps) {
+  const [rated, setRated] = useState<"slow" | "good" | "fast" | null>(null);
+
   return (
     <Layout>
       <div
@@ -79,10 +70,39 @@ export function FlashStats({
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.875rem" }}>How did that feel?</p>
           <div style={{ display: "flex", gap: 12 }}>
-            <button onClick={() => onRate("slow")} style={ratingBtn(false)}>Too slow</button>
-            <button onClick={() => onRate("good")} style={ratingBtn(true)}>Good</button>
-            <button onClick={() => onRate("fast")} style={ratingBtn(false)}>Too fast</button>
+            {(["slow", "good", "fast"] as const).map((r) => {
+              const isSelected = rated === r;
+              const isDefault = r === "good" && !rated;
+              const active = isSelected || isDefault;
+              return (
+                <button
+                  key={r}
+                  onClick={() => {
+                    setRated(r);
+                    onRate(r);
+                  }}
+                  style={{
+                    padding: "12px 24px",
+                    borderRadius: 10,
+                    fontSize: "0.875rem",
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    border: active ? "none" : "1px solid rgba(255,255,255,0.15)",
+                    background: active ? "#FFD700" : "transparent",
+                    color: active ? "#000" : "rgba(255,255,255,0.6)",
+                    fontWeight: active ? 700 : 400,
+                  }}
+                >
+                  {r === "slow" ? "Too slow" : r === "fast" ? "Too fast" : "Good"}
+                </button>
+              );
+            })}
           </div>
+          {rated && (
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", marginTop: 4 }}>
+              Saved!
+            </p>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 16, marginTop: 8 }}>

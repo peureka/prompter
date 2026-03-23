@@ -68,7 +68,7 @@ export function Home({ onNewSession, onSelectSession }: HomeProps) {
               letterSpacing: "-0.02em",
             }}
           >
-            Prompter
+            FlashScroll
           </h1>
           <button
             onClick={onNewSession}

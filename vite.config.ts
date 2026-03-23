@@ -8,8 +8,8 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "Prompter",
-        short_name: "Prompter",
+        name: "FlashScroll",
+        short_name: "FlashScroll",
         description: "Teleprompter for practising and delivering spoken content",
         start_url: "/",
         display: "standalone",

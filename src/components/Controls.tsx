@@ -23,13 +23,11 @@ interface ControlsProps {
 const STYLE_LABELS: Record<FlashStyle, string> = {
   word: "Aa",
   letter: "A.",
-  page: "¶",
 };
 
 const STYLE_TITLES: Record<FlashStyle, string> = {
-  word: "Style: full word — press I to cycle",
-  letter: "Style: first letter — press I to cycle",
-  page: "Style: initials page — press I to cycle",
+  word: "Style: full word — press I to toggle",
+  letter: "Style: first letter — press I to toggle",
 };
 
 export function Controls({

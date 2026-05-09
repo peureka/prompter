@@ -9,7 +9,7 @@ const shortcuts = [
   ["Esc", "Exit to sessions"],
   ["M", "Toggle mirror"],
   ["F", "Toggle fullscreen"],
-  ["I", "Cycle flash style (word → letter → page)"],
+  ["I", "Toggle flash style (word ↔ first letter)"],
   ["?", "This help"],
 ];
 

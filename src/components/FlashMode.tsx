@@ -41,6 +41,8 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
   const [showHelp, setShowHelp] = useState(false);
   const [isMirrored, setIsMirrored] = useState(false);
   const [flashStyle, setFlashStyle] = useState<FlashStyle>("word");
+  const [isHolding, setIsHolding] = useState(false);
+  const wasPlayingBeforeHoldRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
@@ -102,6 +104,21 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
     });
   }, []);
 
+  const handleHoldStart = useCallback(() => {
+    if (flashStyle !== "letter" || !hasStarted) return;
+    wasPlayingBeforeHoldRef.current = isPlaying;
+    setIsPlaying(false);
+    setIsHolding(true);
+  }, [flashStyle, hasStarted, isPlaying]);
+
+  const handleHoldEnd = useCallback(() => {
+    setIsHolding((wasHolding) => {
+      if (!wasHolding) return false;
+      if (wasPlayingBeforeHoldRef.current) setIsPlaying(true);
+      return false;
+    });
+  }, []);
+
   const handleCountdownComplete = useCallback(() => {
     setShowCountdown(false);
     setHasStarted(true);
@@ -137,7 +154,11 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
   });
 
   useGestures(containerRef, {
-    onTap: handleTogglePlay,
+    onTap: () => {
+      // In letter mode every press is a hold-to-reveal; don't toggle play on tap.
+      if (flashStyle === "letter") return;
+      handleTogglePlay();
+    },
     onSwipeLeft: () => !isPageStyle && skipWords(10),
     onSwipeRight: () => !isPageStyle && skipWords(-10),
   });
@@ -157,7 +178,10 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
 
   const renderedWord = (() => {
     const source = hasStarted ? currentWord : words[0] || "";
-    if (flashStyle === "letter") return source ? source[0] : "";
+    if (flashStyle === "letter") {
+      if (isHolding) return source;
+      return source ? source[0] : "";
+    }
     return source;
   })();
 
@@ -169,7 +193,15 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
       <div
         ref={containerRef}
         className={`w-full h-full relative ${isPlaying && !isPageStyle ? "playing-mode" : ""} ${isPageStyle ? "" : "flex flex-col items-center justify-center"}`}
-        style={{ cursor: isPageStyle ? "default" : "pointer" }}
+        style={{
+          cursor: isPageStyle ? "default" : flashStyle === "letter" ? (isHolding ? "grabbing" : "grab") : "pointer",
+          touchAction: flashStyle === "letter" ? "none" : undefined,
+          userSelect: flashStyle === "letter" ? "none" : undefined,
+        }}
+        onPointerDown={flashStyle === "letter" ? handleHoldStart : undefined}
+        onPointerUp={flashStyle === "letter" ? handleHoldEnd : undefined}
+        onPointerCancel={flashStyle === "letter" ? handleHoldEnd : undefined}
+        onPointerLeave={flashStyle === "letter" ? handleHoldEnd : undefined}
       >
         {isPageStyle ? (
           <div

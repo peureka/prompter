@@ -10,6 +10,7 @@ interface KeyboardActions {
   onToggleMirror?: () => void;
   onToggleFullscreen?: () => void;
   onToggleHelp?: () => void;
+  onCycleStyle?: () => void;
 }
 
 export function useKeyboard(actions: KeyboardActions) {
@@ -57,6 +58,12 @@ export function useKeyboard(actions: KeyboardActions) {
           if (!e.metaKey && !e.ctrlKey) {
             e.preventDefault();
             actions.onToggleFullscreen?.();
+          }
+          break;
+        case "KeyI":
+          if (!e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            actions.onCycleStyle?.();
           }
           break;
         case "Slash":

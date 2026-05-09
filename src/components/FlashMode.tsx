@@ -10,13 +10,17 @@ import { Controls } from "./Controls";
 import { ProgressBar } from "./ProgressBar";
 import { FlashStats } from "./FlashStats";
 import { KeyboardHelp } from "./KeyboardHelp";
+import { firstLetters } from "../lib/text-cleaner";
 import {
   FLASH_WPM_DEFAULT,
   FLASH_WPM_MIN,
   FLASH_WPM_MAX,
   FONT_SIZES,
   FONT_SIZE_DEFAULT,
+  PAUSE_MARKER,
 } from "../lib/constants";
+
+export type FlashStyle = "word" | "letter" | "page";
 
 interface FlashModeProps {
   text: string;
@@ -36,6 +40,7 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
   const [showStats, setShowStats] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [isMirrored, setIsMirrored] = useState(false);
+  const [flashStyle, setFlashStyle] = useState<FlashStyle>("word");
   const containerRef = useRef<HTMLDivElement>(null);
   const { isFullscreen, toggleFullscreen } = useFullscreen();
 
@@ -48,6 +53,17 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
     () => text.split(/\s+/).filter(Boolean),
     [text]
   );
+
+  const initialsParagraphs = useMemo(
+    () =>
+      firstLetters(text)
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter(Boolean),
+    [text]
+  );
+
+  const isPageStyle = flashStyle === "page";
 
   const {
     currentWord,
@@ -63,19 +79,28 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
 
   const { controlsVisible } = useAutoHide(isPlaying);
 
-  // Show stats when complete
-  if (isComplete && !showStats) {
+  // Show stats when complete (only for engine-driven styles)
+  if (!isPageStyle && isComplete && !showStats) {
     setIsPlaying(false);
     setShowStats(true);
   }
 
   const handleTogglePlay = useCallback(() => {
+    if (isPageStyle) return;
     if (!hasStarted) {
       setShowCountdown(true);
       return;
     }
     setIsPlaying((p) => !p);
-  }, [hasStarted]);
+  }, [hasStarted, isPageStyle]);
+
+  const handleCycleStyle = useCallback(() => {
+    setFlashStyle((s) => {
+      const next: FlashStyle = s === "word" ? "letter" : s === "letter" ? "page" : "word";
+      if (next === "page") setIsPlaying(false);
+      return next;
+    });
+  }, []);
 
   const handleCountdownComplete = useCallback(() => {
     setShowCountdown(false);
@@ -102,18 +127,19 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
     onTogglePlay: handleTogglePlay,
     onSpeedUp: () => setWpm((w) => Math.min(w + 10, FLASH_WPM_MAX)),
     onSpeedDown: () => setWpm((w) => Math.max(w - 10, FLASH_WPM_MIN)),
-    onSkipForward: () => skipWords(10),
-    onSkipBack: () => skipWords(-10),
+    onSkipForward: () => !isPageStyle && skipWords(10),
+    onSkipBack: () => !isPageStyle && skipWords(-10),
     onExit,
     onToggleMirror: () => setIsMirrored((m) => !m),
     onToggleFullscreen: toggleFullscreen,
     onToggleHelp: () => setShowHelp((h) => !h),
+    onCycleStyle: handleCycleStyle,
   });
 
   useGestures(containerRef, {
     onTap: handleTogglePlay,
-    onSwipeLeft: () => skipWords(10),
-    onSwipeRight: () => skipWords(-10),
+    onSwipeLeft: () => !isPageStyle && skipWords(10),
+    onSwipeRight: () => !isPageStyle && skipWords(-10),
   });
 
   if (showStats) {
@@ -129,41 +155,80 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
     );
   }
 
+  const renderedWord = (() => {
+    const source = hasStarted ? currentWord : words[0] || "";
+    if (flashStyle === "letter") return source ? source[0] : "";
+    return source;
+  })();
+
   return (
     <Layout>
-      {showCountdown && <Countdown onComplete={handleCountdownComplete} />}
+      {showCountdown && !isPageStyle && <Countdown onComplete={handleCountdownComplete} />}
       {showHelp && <KeyboardHelp onClose={() => setShowHelp(false)} />}
 
       <div
         ref={containerRef}
-        className={`w-full h-full flex flex-col items-center justify-center relative ${isPlaying ? "playing-mode" : ""}`}
-        style={{ cursor: "pointer" }}
+        className={`w-full h-full relative ${isPlaying && !isPageStyle ? "playing-mode" : ""} ${isPageStyle ? "" : "flex flex-col items-center justify-center"}`}
+        style={{ cursor: isPageStyle ? "default" : "pointer" }}
       >
-        {/* Focal point indicator */}
-        <div className="absolute w-1 h-1 rounded-full bg-text/30" />
+        {isPageStyle ? (
+          <div
+            className="w-full h-full overflow-y-auto px-8 md:px-12 py-12"
+            style={{ transform: isMirrored ? "scaleX(-1)" : undefined }}
+          >
+            <div className="max-w-[800px] mx-auto">
+              {initialsParagraphs.map((para, i) => {
+                if (para === PAUSE_MARKER) {
+                  return <div key={i} className="h-8" />;
+                }
+                return (
+                  <p
+                    key={i}
+                    className="mb-6"
+                    style={{
+                      color: "#FFD700",
+                      fontWeight: 700,
+                      fontSize: `${FONT_SIZES[fontSizeIndex].size}rem`,
+                      lineHeight: 1.7,
+                      letterSpacing: "0.05em",
+                      wordBreak: "break-word",
+                    }}
+                  >
+                    {para}
+                  </p>
+                );
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Focal point indicator */}
+            <div className="absolute w-1 h-1 rounded-full bg-text/30" />
 
-        {/* Current word */}
-        <p
-          style={{
-            color: "#FFD700",
-            fontWeight: 700,
-            textAlign: "center",
-            padding: "0 24px",
-            fontSize: `clamp(1.5rem, ${FONT_SIZES[fontSizeIndex].size * 4}vw, ${FONT_SIZES[fontSizeIndex].size * 1.5}rem)`,
-            opacity: hasStarted ? 1 : 0.3,
-            transform: isMirrored ? "scaleX(-1)" : undefined,
-            overflowWrap: "break-word",
-            wordBreak: "break-word",
-            maxWidth: "100%",
-          }}
-        >
-          {hasStarted ? currentWord : words[0] || ""}
-        </p>
+            {/* Current word or first letter */}
+            <p
+              style={{
+                color: "#FFD700",
+                fontWeight: 700,
+                textAlign: "center",
+                padding: "0 24px",
+                fontSize: `clamp(1.5rem, ${FONT_SIZES[fontSizeIndex].size * 4}vw, ${FONT_SIZES[fontSizeIndex].size * 1.5}rem)`,
+                opacity: hasStarted ? 1 : 0.3,
+                transform: isMirrored ? "scaleX(-1)" : undefined,
+                overflowWrap: "break-word",
+                wordBreak: "break-word",
+                maxWidth: "100%",
+              }}
+            >
+              {renderedWord}
+            </p>
 
-        {/* Word counter */}
-        <p className="absolute bottom-24 text-white/30 text-sm">
-          {hasStarted ? `${wordIndex + 1} / ${totalWords}` : `${totalWords} words`}
-        </p>
+            {/* Word counter */}
+            <p className="absolute bottom-24 text-white/30 text-sm">
+              {hasStarted ? `${wordIndex + 1} / ${totalWords}` : `${totalWords} words`}
+            </p>
+          </>
+        )}
       </div>
 
       <Controls
@@ -181,9 +246,11 @@ export function FlashMode({ text, onExit, onRate, initialWpm, initialFontSize, o
         onToggleMirror={() => setIsMirrored((m) => !m)}
         isFullscreen={isFullscreen}
         onToggleFullscreen={toggleFullscreen}
+        flashStyle={flashStyle}
+        onCycleStyle={handleCycleStyle}
       />
 
-      <ProgressBar progress={progress} />
+      {!isPageStyle && <ProgressBar progress={progress} />}
     </Layout>
   );
 }

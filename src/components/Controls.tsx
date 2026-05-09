@@ -1,4 +1,5 @@
 import { FONT_SIZES } from "../lib/constants";
+import type { FlashStyle } from "./FlashMode";
 
 interface ControlsProps {
   isPlaying: boolean;
@@ -15,7 +16,21 @@ interface ControlsProps {
   onToggleMirror?: () => void;
   isFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  flashStyle?: FlashStyle;
+  onCycleStyle?: () => void;
 }
+
+const STYLE_LABELS: Record<FlashStyle, string> = {
+  word: "Aa",
+  letter: "A.",
+  page: "¶",
+};
+
+const STYLE_TITLES: Record<FlashStyle, string> = {
+  word: "Style: full word — press I to cycle",
+  letter: "Style: first letter — press I to cycle",
+  page: "Style: initials page — press I to cycle",
+};
 
 export function Controls({
   isPlaying,
@@ -32,6 +47,8 @@ export function Controls({
   onToggleMirror,
   isFullscreen,
   onToggleFullscreen,
+  flashStyle,
+  onCycleStyle,
 }: ControlsProps) {
   return (
     <div
@@ -97,6 +114,20 @@ export function Controls({
             </button>
           ))}
         </div>
+
+        {/* Flash style cycle */}
+        {onCycleStyle && flashStyle && (
+          <button
+            onClick={onCycleStyle}
+            className={`p-2 transition-colors shrink-0 rounded-lg hover:bg-white/5 text-[13px] font-bold tabular-nums w-9 ${
+              flashStyle === "word" ? "text-white/40 hover:text-white" : "text-text"
+            }`}
+            aria-label="Cycle flash style"
+            title={STYLE_TITLES[flashStyle]}
+          >
+            {STYLE_LABELS[flashStyle]}
+          </button>
+        )}
 
         {/* Mirror */}
         {onToggleMirror && (

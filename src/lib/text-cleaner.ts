@@ -38,3 +38,29 @@ export function cleanText(raw: string): string {
 
   return text;
 }
+
+/**
+ * Reduce each word to its first letter, preserving punctuation, paragraph
+ * breaks, and //pause markers. Used for the first-letter recall practice
+ * method (read across initials, recall the lines).
+ */
+export function firstLetters(raw: string): string {
+  if (!raw) return "";
+
+  return raw
+    .split("\n")
+    .map((line) => {
+      if (line.trim() === "//pause") return line;
+      return line
+        .split(/(\s+)/)
+        .map((token) => {
+          if (token === "" || /^\s+$/.test(token)) return token;
+          const m = token.match(/^([^A-Za-z]*)([A-Za-z])([A-Za-z'-]*)(.*)$/);
+          if (!m) return token;
+          const [, leading, firstChar, , trailing] = m;
+          return leading + firstChar + trailing;
+        })
+        .join("");
+    })
+    .join("\n");
+}
